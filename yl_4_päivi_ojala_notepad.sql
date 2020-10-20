@@ -76,6 +76,3 @@ GROUP BY eesnimi;
 SELECT nimi, AVG(DATEDIFF(minute, partiid.algushetk, partiid.lopphetk)) AS keskmine_aeg 
 FROM partiid JOIN turniirid ON (partiid.turniir=turniirid.id)
 GROUP BY nimi;
-
-
--- Praktikumis tundus JOIN keeruline, aga ülesandeid lahendades kulus endalegi üllatuseks hoopis COUNT() ja AVG() peale kõige rohkem aega. SQLZoo'st oli JOINimise mõistmisel väga palju kasu. Agregeerivaid funktsioone pean veel harjutama.

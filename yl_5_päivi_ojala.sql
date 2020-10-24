@@ -2,8 +2,8 @@
 
 
 -- 1. Luua vaade v_turniiripartiid (turniir_nimi, partii_id, partii_algus, partii_lopp).
-CREATE VIEW v_turniiripartiid (turniir_nimi, partii_algus, partii_lopp) AS
-SELECT turniirid.nimi, partiid.algushetk, partiid.lopphetk
+CREATE VIEW v_turniiripartiid (turniir_nimi, partii_id, partii_algus, partii_lopp) AS
+SELECT turniirid.nimi, partiid.id, partiid.algushetk, partiid.lopphetk
 FROM turniirid, partiid
 WHERE turniirid.id=partiid.turniir;
 

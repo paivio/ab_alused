@@ -96,7 +96,15 @@ END;
 
 
 -- 9. Luua tabelit väljastav protseduur sp_voit_viik_kaotus, mis väljastab kõigi osalenud mängijate võitude, viikide ja kaotuste arvu etteantud turniiril. Tabeli struktuur: id, eesnimi, perenimi, võite, viike, kaotusi (f_mangija_voite_turniiril jt sarnased funktsioonid oleksid abiks ...)
-
+CREATE PROCEDURE sp_voit_viik_kaotus()
+RESULT(id INTEGER, eesnimi VARCHAR(20), perenimi VARCHAR(20), võite INTEGER, viike INTEGER, kaotusi INTEGER)
+BEGIN
+    SELECT DISTINCT partiid.turniir, isikud.eesnimi, isikud.perenimi, 
+    f_mangija_voite_turniiril(isikud.id, partiid.turniir), 
+    f_mangija_viike_turniiril(isikud.id, partiid.turniir),
+    f_mangija_kaotusi_turniiril(isikud.id, partiid.turniir)
+    FROM isikud JOIN partiid ON isikud.id = partiid.valge OR isikud.id = partiid.must;
+END;
 
 
 -- 10. Luua indeks turniiride algusaegade peale.

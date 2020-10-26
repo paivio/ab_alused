@@ -68,11 +68,34 @@ END;
 
 
 -- 7. Luua tabelit väljastav protseduur sp_infopump() See peab andma välja unioniga kokku panduna järgmised asjad (kasutades varemdefineeritud võimalusi): 1) klubi nimi ja tema mängijate arv (kasutada funktsiooni f_klubisuurus) 2) turniiri nimi ja tema jooksul tehtud mängude arv (kasutada group by) 3) mängija nimi ja tema poolt mängitud partiide arv (kasutada f_nimi ja f_mangija_koormus) ning tulemus sorteerida nii, et klubide info oleks kõige ees, siis turniiride oma ja siis alles isikud. Iga grupi sees sorteerida nime järgi.
+CREATE PROCEDURE sp_infopump()
+RESULT (nimi VARCHAR(50), arv INTEGER, jrk INTEGER)
+BEGIN
+    SELECT klubid.nimi, COUNT (isikud.klubi), 1
+    FROM klubid JOIN isikud ON klubid.id = isikud.klubi
+    GROUP BY klubid.nimi
+    UNION
+    SELECT turniirid.nimi, COUNT (partiid.id), 2
+    FROM turniirid JOIN partiid ON turniirid.id = partiid.turniir
+    GROUP BY turniirid.nimi
+    UNION
+    SELECT isikud.perenimi || ', ' || isikud.eesnimi, COUNT (partiid.id), 3
+    FROM isikud JOIN partiid ON isikud.id = partiid.valge OR isikud.id = partiid.must
+    GROUP BY isikud.perenimi, isikud.eesnimi
+    ORDER BY 3;
+END;
 
 
 
 -- 8. Luua tabelit väljastav protseduur sp_top10, millel on üks parameeter - turniiri id, ja mis kasutab vaadet v_edetabelid ja annab tulemuseks kümme parimat etteantud turniiril.
-
+CREATE PROCEDURE sp_top10 (IN t_id INTEGER)
+RESULT(nimi VARCHAR(50), punktid DECIMAL(4,1))
+BEGIN
+    SELECT TOP 10 mangija, punkte 
+    FROM v_edetabelid
+    WHERE t_id = turniir
+    ORDER BY punkte DESC;
+END;
 
 
 -- 9. Luua tabelit väljastav protseduur sp_voit_viik_kaotus, mis väljastab kõigi osalenud mängijate võitude, viikide ja kaotuste arvu etteantud turniiril. Tabeli struktuur: id, eesnimi, perenimi, võite, viike, kaotusi (f_mangija_voite_turniiril jt sarnased funktsioonid oleksid abiks ...)
@@ -80,7 +103,9 @@ END;
 
 
 -- 10. Luua indeks turniiride algusaegade peale.
-
+CREATE INDEX t_algus ON turniirid (alguskuupaev);
 
 
 -- 11. Luua indeksid partiidele kahanevalt valge ja musta tulemuse peale.
+CREATE INDEX i_valge ON partiid (valge_tulemus DESC);
+CREATE INDEX i_must ON partiid (musta_tulemus DESC);

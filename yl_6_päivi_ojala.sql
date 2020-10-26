@@ -69,22 +69,19 @@ END;
 
 -- 7. Luua tabelit väljastav protseduur sp_infopump() See peab andma välja unioniga kokku panduna järgmised asjad (kasutades varemdefineeritud võimalusi): 1) klubi nimi ja tema mängijate arv (kasutada funktsiooni f_klubisuurus) 2) turniiri nimi ja tema jooksul tehtud mängude arv (kasutada group by) 3) mängija nimi ja tema poolt mängitud partiide arv (kasutada f_nimi ja f_mangija_koormus) ning tulemus sorteerida nii, et klubide info oleks kõige ees, siis turniiride oma ja siis alles isikud. Iga grupi sees sorteerida nime järgi.
 CREATE PROCEDURE sp_infopump()
-RESULT (nimi VARCHAR(50), arv INTEGER, jrk INTEGER)
+RESULT (nimi VARCHAR(70), arv INTEGER, jrk INTEGER)
 BEGIN
-    SELECT klubid.nimi, COUNT (isikud.klubi), 1
-    FROM klubid JOIN isikud ON klubid.id = isikud.klubi
-    GROUP BY klubid.nimi
+    SELECT klubid.nimi, f_klubisuurus(klubid.id), 1
+    FROM klubid
     UNION
     SELECT turniirid.nimi, COUNT (partiid.id), 2
     FROM turniirid JOIN partiid ON turniirid.id = partiid.turniir
     GROUP BY turniirid.nimi
     UNION
-    SELECT isikud.perenimi || ', ' || isikud.eesnimi, COUNT (partiid.id), 3
-    FROM isikud JOIN partiid ON isikud.id = partiid.valge OR isikud.id = partiid.must
-    GROUP BY isikud.perenimi, isikud.eesnimi
+    SELECT f_nimi(isikud.eesnimi, isikud.perenimi), f_mangija_koormus(isikud.id), 3
+    FROM isikud
     ORDER BY 3;
 END;
-
 
 
 -- 8. Luua tabelit väljastav protseduur sp_top10, millel on üks parameeter - turniiri id, ja mis kasutab vaadet v_edetabelid ja annab tulemuseks kümme parimat etteantud turniiril.

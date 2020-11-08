@@ -10,10 +10,10 @@ END;
 
 
 -- 2. Luua f-n ees- ja perenime kokku liitmiseks eesti ametlikul viisil ("perenimi, eesnimi") f_nimi('Eesnimi', 'Perenimi').
-CREATE FUNCTION f_nimi (f_eesnimi VARCHAR(20), f_perenimi VARCHAR(20))
-RETURNS VARCHAR(50)
+CREATE FUNCTION f_nimi (f_eesnimi VARCHAR(50), f_perenimi VARCHAR(50))
+RETURNS VARCHAR(102)
 BEGIN
-    DECLARE uus_nimi VARCHAR(50);
+    DECLARE uus_nimi VARCHAR(102);
     SELECT (Perenimi || ', ' || Eesnimi) INTO uus_nimi FROM isikud
     WHERE Eesnimi = f_eesnimi AND Perenimi = f_perenimi;
     RETURN uus_nimi;
@@ -37,8 +37,8 @@ RETURNS INTEGER
 BEGIN
     DECLARE voitude_arv INTEGER;
     SELECT COUNT (Id) INTO voitude_arv FROM partiid
-    WHERE (m_id = Valge OR m_id = Must) AND t_id = Turniir 
-    AND (Valge_tulemus = 2 OR Musta_tulemus = 2);
+    WHERE (m_id = Valge AND Valge_tulemus = 2) OR (m_id = Must AND Musta_tulemus = 2)
+    AND t_id = Turniir;
     RETURN voitude_arv;
 END;
 
@@ -56,8 +56,8 @@ END;
 
 
 -- 6. Luua protseduur sp_uus_isik, mis lisab eesnime ja perenimega määratud isiku etteantud numbriga klubisse ning paneb neljandasse parameetrisse uue isiku ID väärtuse. 
-CREATE PROCEDURE sp_uus_isik (IN u_eesnimi VARCHAR(20), 
-IN u_perenimi VARCHAR(20), IN u_klubi INTEGER, OUT u_id INTEGER)
+CREATE PROCEDURE sp_uus_isik (IN u_eesnimi VARCHAR(50), 
+IN u_perenimi VARCHAR(50), IN u_klubi INTEGER, OUT u_id INTEGER)
 BEGIN
     DECLARE i_id INTEGER;
     INSERT INTO isikud(eesnimi, perenimi, klubi)
@@ -69,7 +69,7 @@ END;
 
 -- 7. Luua tabelit väljastav protseduur sp_infopump() See peab andma välja unioniga kokku panduna järgmised asjad (kasutades varemdefineeritud võimalusi): 1) klubi nimi ja tema mängijate arv (kasutada funktsiooni f_klubisuurus) 2) turniiri nimi ja tema jooksul tehtud mängude arv (kasutada group by) 3) mängija nimi ja tema poolt mängitud partiide arv (kasutada f_nimi ja f_mangija_koormus) ning tulemus sorteerida nii, et klubide info oleks kõige ees, siis turniiride oma ja siis alles isikud. Iga grupi sees sorteerida nime järgi.
 CREATE PROCEDURE sp_infopump()
-RESULT (nimi VARCHAR(70), arv INTEGER, jrk INTEGER)
+RESULT (nimi VARCHAR(102), arv INTEGER, jrk INTEGER)
 BEGIN
     SELECT klubid.nimi, f_klubisuurus(klubid.id), 1
     FROM klubid
@@ -80,7 +80,7 @@ BEGIN
     UNION
     SELECT f_nimi(isikud.eesnimi, isikud.perenimi), f_mangija_koormus(isikud.id), 3
     FROM isikud
-    ORDER BY 3;
+    ORDER BY 3, 1;
 END;
 
 
@@ -96,14 +96,15 @@ END;
 
 
 -- 9. Luua tabelit väljastav protseduur sp_voit_viik_kaotus, mis väljastab kõigi osalenud mängijate võitude, viikide ja kaotuste arvu etteantud turniiril. Tabeli struktuur: id, eesnimi, perenimi, võite, viike, kaotusi (f_mangija_voite_turniiril jt sarnased funktsioonid oleksid abiks ...)
-CREATE PROCEDURE sp_voit_viik_kaotus()
-RESULT(id INTEGER, eesnimi VARCHAR(20), perenimi VARCHAR(20), võite INTEGER, viike INTEGER, kaotusi INTEGER)
+CREATE PROCEDURE sp_voit_viik_kaotus(IN tur_id INTEGER)
+RESULT(id INTEGER, eesnimi VARCHAR(50), perenimi VARCHAR(50), võite INTEGER, viike INTEGER, kaotusi INTEGER)
 BEGIN
-    SELECT DISTINCT partiid.turniir, isikud.eesnimi, isikud.perenimi, 
+    SELECT DISTINCT isikud.id, isikud.eesnimi, isikud.perenimi, 
     f_mangija_voite_turniiril(isikud.id, partiid.turniir), 
     f_mangija_viike_turniiril(isikud.id, partiid.turniir),
     f_mangija_kaotusi_turniiril(isikud.id, partiid.turniir)
-    FROM isikud JOIN partiid ON isikud.id = partiid.valge OR isikud.id = partiid.must;
+    FROM isikud JOIN partiid ON isikud.id = partiid.valge OR isikud.id = partiid.must
+    WHERE partiid.turniir = tur_id;
 END;
 
 

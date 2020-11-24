@@ -20,7 +20,7 @@ WHERE klubid.id=isikud.klubi AND LEFT(klubid.nimi,1)='V' AND LEFT(isikud.eesnimi
 
 
 -- 4. Leida kõige esimesena alanud partii algusaeg.
-SELECT MIN(partiid.algushetk) AS esimene_partii
+SELECT MIN(partiid.algushetk) AS algusaeg
 FROM partiid;
 
 
@@ -31,9 +31,9 @@ WHERE algushetk BETWEEN ('2005-03-04 09:00') AND ('2005-03-04 10:59');
 
 
 -- 6. Leida valgetega võitnute (valge_tulemus=2) isikute nimed (eesnimi, perenimi), kus partii kestis 9 kuni 11 minutit (vt funktsiooni Datediff(); Datediff(minute, <algus>, <lõpp>)).
-SELECT eesnimi, perenimi, (SELECT DATEDIFF(minute, algushetk, lopphetk)) AS vahe 
+SELECT eesnimi, perenimi
 FROM partiid JOIN isikud ON (partiid.valge=isikud.id)
-WHERE vahe BETWEEN 9 AND 11 
+WHERE (SELECT DATEDIFF(minute, algushetk, lopphetk)) BETWEEN 9 AND 11 
 AND valge_tulemus=2;
 
 
@@ -52,21 +52,21 @@ HAVING liikmeid < 4;
 
 
 -- 9. Leida kõigi Arvode poolt kokku valgetega mängitud partiide arv.
-SELECT eesnimi, COUNT(partiid.id) AS partiide_arv
+SELECT COUNT(partiid.id) AS partiide_arv
 FROM partiid JOIN isikud ON (partiid.valge=isikud.id)
 WHERE eesnimi = 'Arvo'
 GROUP BY eesnimi;
 
 
 -- 10. Leida kõigi Arvode poolt kokku valgetega mängitud partiide arv turniiride lõikes (turniiri id ja partiide arv).
-SELECT eesnimi, turniir, COUNT(partiid.id) AS partiide_arv
+SELECT turniir, COUNT(partiid.id) AS partiide_arv
 FROM partiid JOIN isikud ON (partiid.valge=isikud.id)
 WHERE eesnimi = 'Arvo'
 GROUP BY eesnimi, turniir;
 
 
 -- 11. Leida kõigi Mariade poolt kokku mustadega mängitud mängudest saadud punktide arv (tulemus = 2 on võit ja annab ühe punkti, tulemus = 1 on viik ja annab pool punkti).
-SELECT eesnimi, SUM(musta_tulemus*0.5) AS punktid
+SELECT SUM(musta_tulemus*0.5) AS punktid
 FROM isikud JOIN partiid ON (partiid.must=isikud.id)
 WHERE eesnimi = 'Maria'
 GROUP BY eesnimi;
